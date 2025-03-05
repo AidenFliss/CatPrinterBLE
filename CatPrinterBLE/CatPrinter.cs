@@ -35,8 +35,14 @@ class CatPrinter : IAsyncDisposable
         UnknownB3 = 0xB3
     }
 
+    public enum PrintModes : byte
+    {
+        Monochrome = 0x0,
+        Unknown01 = 0x1, // Similar to monochrome but doesn't eject as much paper after finishing printing?
+        Grayscale = 0x2
+    }
+
     const int LINE_PIXELS_COUNT = 384;
-    const int LINE_BYTES_COUNT = LINE_PIXELS_COUNT >> 3; // 1bpp
 
     public CatPrinter()
     {
@@ -170,34 +176,35 @@ class CatPrinter : IAsyncDisposable
         if (!await FindRequiredCharacteristicsAsync()) return;
 
         if (intensity > 100) intensity = 100;
-        intensity /= 2; // Seems like a more appropriate range, as most values print very intense 
+        //intensity /= 2; // Seems like a more appropriate range, as most values print very intense 
         await SendCommand(CommandIds.PrintIntensity, new byte[] { intensity }, false);
     }
 
-    public async Task Print(string imagePath, float gamma = ImageProcessor.LINEAR_GAMMA, BaseDither.Methods ditheringMethod = BaseDither.Methods.FloydSteinberg)
+    public async Task Print(string imagePath, PrintModes printMode = PrintModes.Monochrome, BaseDither.Methods ditheringMethod = BaseDither.Methods.FloydSteinberg)
     {
         if (!await FindRequiredCharacteristicsAsync()) return;
 
-        byte[]? pixels = ImageProcessor.LoadAndProcess(imagePath, LINE_PIXELS_COUNT, gamma, ditheringMethod);
+        int bytesPerLine = printMode == PrintModes.Grayscale ? LINE_PIXELS_COUNT >> 1 : LINE_PIXELS_COUNT >> 3;
+        ImageProcessor.ColorModes colorMode = printMode == PrintModes.Grayscale ? ImageProcessor.ColorModes.Mode_4bpp : ImageProcessor.ColorModes.Mode_1bpp;
+
+        byte[]? pixels = ImageProcessor.LoadAndProcess(imagePath, LINE_PIXELS_COUNT, colorMode, ditheringMethod);
         if (pixels == null) return;
 
-        int lineCount = pixels.Length / LINE_BYTES_COUNT;
+        int lineCount = pixels.Length / bytesPerLine;
 
         byte[] printCommandData = new byte[4];
-        printCommandData[0] = (byte)((lineCount >> 0) & 0xFF); // This has to be little endian
+        printCommandData[0] = (byte)((lineCount >> 0) & 0xFF); // Little endian
         printCommandData[1] = (byte)((lineCount >> 8) & 0xFF);
-
-        // Possible modes: 3000, 3001, 3002
         printCommandData[2] = 0x30;
-        printCommandData[3] = 0x00;
+        printCommandData[3] = (byte)printMode;
 
         await SendCommand(CommandIds.Print, printCommandData, true);
 
-        byte[] line = new byte[LINE_BYTES_COUNT];
+        byte[] line = new byte[bytesPerLine];
 
         for (int l = 0; l < lineCount; l++)
         {
-            Array.Copy(pixels, l * LINE_BYTES_COUNT, line, 0, LINE_BYTES_COUNT);
+            Array.Copy(pixels, l * bytesPerLine, line, 0, bytesPerLine);
             await dataCharacteristic!.WriteValueWithoutResponseAsync(line);
         }
 
@@ -368,10 +375,10 @@ class CatPrinter : IAsyncDisposable
         command[1] = 0x21;
         command[2] = (byte)commandId;
         command[3] = 0x00;
-        command[4] = (byte)((commandData.Length >> 0) & 0xFF); // This should be little endian
+        command[4] = (byte)((commandData.Length >> 0) & 0xFF); // Little endian
         command[5] = (byte)((commandData.Length >> 8) & 0xFF);
         Array.Copy(commandData, 0, command, 6, commandData.Length);
-        command[6 + commandData.Length] = Crc8.Calculate(commandData); // CRC, but should it be 0 on MXW01?
+        command[6 + commandData.Length] = Crc8.Calculate(commandData);
         command[7 + commandData.Length] = 0xFF;
 
         return command;

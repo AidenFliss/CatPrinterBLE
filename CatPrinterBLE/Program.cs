@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -91,12 +90,14 @@ internal class Program
                     intensity = 50;
                 }
 
-                if (!float.TryParse(args[2], CultureInfo.InvariantCulture, out float gamma))
+                CatPrinter.PrintModes printMode;
+                switch (args[2])
                 {
-                    gamma = ImageProcessor.LINEAR_GAMMA;
+                    case "4bpp": printMode = CatPrinter.PrintModes.Grayscale; break;
+                    default: printMode = CatPrinter.PrintModes.Monochrome; break;
                 }
 
-                BaseDither.Methods ditheringMethod = BaseDither.Methods.None;
+                BaseDither.Methods ditheringMethod;
                 switch (args[3])
                 {
                     case "Bayer2x2": ditheringMethod = BaseDither.Methods.Bayer2x2; break;
@@ -105,6 +106,7 @@ internal class Program
                     case "Bayer16x16": ditheringMethod = BaseDither.Methods.Bayer16x16; break;
                     case "BlueNoise": ditheringMethod = BaseDither.Methods.BlueNoise; break;
                     case "FloydSteinberg": ditheringMethod = BaseDither.Methods.FloydSteinberg; break;
+                    default: ditheringMethod = BaseDither.Methods.None; break;
                 }
 
                 string imagePath = args[4];
@@ -115,7 +117,7 @@ internal class Program
                     if (success)
                     {
                         await ble.SetPrintIntensity(intensity);
-                        await ble.Print(imagePath, gamma, ditheringMethod);
+                        await ble.Print(imagePath, printMode, ditheringMethod);
                     }
                 }
 
