@@ -29,7 +29,7 @@ class CatPrinter : IAsyncDisposable
         PrintComplete = 0xAA,
         BatteryLevel = 0xAB,
         CancelPrint = 0xAC,
-        UnknownAD = 0xAD,
+        PrintDataFlush = 0xAD,
         GetVersion = 0xB1,
         UnknownB2 = 0xB2,
         UnknownB3 = 0xB3
@@ -37,7 +37,6 @@ class CatPrinter : IAsyncDisposable
 
     const int LINE_PIXELS_COUNT = 384;
     const int LINE_BYTES_COUNT = LINE_PIXELS_COUNT >> 3; // 1bpp
-    const int MIN_PRINTABLE_LINES = 90;
 
     public CatPrinter()
     {
@@ -187,23 +186,22 @@ class CatPrinter : IAsyncDisposable
         byte[] printCommandData = new byte[4];
         printCommandData[0] = (byte)((lineCount >> 0) & 0xFF); // This has to be little endian
         printCommandData[1] = (byte)((lineCount >> 8) & 0xFF);
+
+        // Possible modes: 3000, 3001, 3002
         printCommandData[2] = 0x30;
         printCommandData[3] = 0x00;
 
         await SendCommand(CommandIds.Print, printCommandData, true);
 
-        // Hardware quirk
-        // It won't start printing until we send at least MIN_PRINTABLE_LINES lines of data, even if we request less
-        // So we send extra lines. They won't be printed anyway.
-
-        int linesToSend = Math.Max(lineCount, MIN_PRINTABLE_LINES);
         byte[] line = new byte[LINE_BYTES_COUNT];
 
-        for (int l = 0; l < linesToSend; l++)
+        for (int l = 0; l < lineCount; l++)
         {
-            if (l < lineCount) Array.Copy(pixels, l * LINE_BYTES_COUNT, line, 0, LINE_BYTES_COUNT);
+            Array.Copy(pixels, l * LINE_BYTES_COUNT, line, 0, LINE_BYTES_COUNT);
             await dataCharacteristic!.WriteValueWithoutResponseAsync(line);
         }
+
+        await SendCommand(CommandIds.PrintDataFlush, new byte[] { 0x0 }, false);
     }
 
     async Task<bool> RequestGattConnectionAsync()
