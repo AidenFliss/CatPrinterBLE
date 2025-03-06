@@ -128,7 +128,7 @@ class ImageProcessor
                     for (int x = 0; x < pixelRow.Length; x++)
                     {
                         byte pixel = (byte)((255 - pixelRow[x].PackedValue) >> 4);
-                        bytes[(y * accessor.Width + x) >> 1] |= (byte)(pixel << ((x & 1) << 4));
+                        bytes[(y * accessor.Width + x) >> 1] |= (byte)(pixel << (((x & 1) ^ 1) << 2));
                     }
                 }
             });
