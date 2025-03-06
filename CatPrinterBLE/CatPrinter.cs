@@ -172,29 +172,29 @@ class CatPrinter : IAsyncDisposable
         await SendCommand(CommandIds.QueryCount, new byte[] { 0x0 }, true);
     }
 
-    public async Task Print(string imagePath, byte intensity, PrintModes printMode = PrintModes.Monochrome, DitheringMethods ditheringMethod = DitheringMethods.FloydSteinberg)
+    public async Task Print(string imagePath, byte intensity, PrintModes printMode = PrintModes.Monochrome, DitheringMethods ditheringMethod = DitheringMethods.None)
     {
         if (!await FindRequiredCharacteristicsAsync()) return;
 
         if (intensity > 100) intensity = 100;
 
         int bytesPerLine;
-        ImageProcessor.ColorModes colorMode;
+        ColorModes colorMode;
         if (printMode == PrintModes.Grayscale)
         {
             bytesPerLine = LINE_PIXELS_COUNT >> 1;
-            colorMode = ImageProcessor.ColorModes.Mode_4bpp;
+            colorMode = ColorModes.Mode_4bpp;
         }
         else
         {
             bytesPerLine = LINE_PIXELS_COUNT >> 3;
-            colorMode = ImageProcessor.ColorModes.Mode_1bpp;
+            colorMode = ColorModes.Mode_1bpp;
             intensity /= 2; // Seems like a more appropriate range, as most values print very intense 
         }
 
         await SendCommand(CommandIds.PrintIntensity, new byte[] { intensity }, false);
 
-        byte[]? pixels = ImageProcessor.LoadAndProcess(imagePath, LINE_PIXELS_COUNT, colorMode, ditheringMethod);
+        byte[]? pixels = LoadAndProcess(imagePath, LINE_PIXELS_COUNT, colorMode, ditheringMethod);
         if (pixels == null) return;
 
         int lineCount = pixels.Length / bytesPerLine;

@@ -55,6 +55,9 @@ class ImageProcessor
         float scale;
         switch (ditheringMethod)
         {
+            // Scale has to be lower for Ordered dithering methods as it generate wrong colors otherwise.
+            // 0.2 is a value I eyeballed that generates a result perceptually similar to the original image.
+
             case DitheringMethods.Bayer2x2: dither = KnownDitherings.Bayer2x2; scale = 0.2f; break;
             case DitheringMethods.Bayer4x4: dither = KnownDitherings.Bayer4x4; scale = 0.2f; break;
             case DitheringMethods.Bayer8x8: dither = KnownDitherings.Bayer8x8; scale = 0.2f; break;
@@ -66,16 +69,23 @@ class ImageProcessor
 
         if (colorMode == ColorModes.Mode_1bpp)
         {
-            image.Mutate(x => x
-            .ProcessPixelRowsAsVector4(row =>
+            if (ditheringMethod == DitheringMethods.None)
             {
-                for (int x = 0; x < row.Length; x++)
+                image.Mutate(x => x.BinaryThreshold(0.5f, BinaryThresholdMode.Luminance));
+            }
+            else
+            {
+                image.Mutate(x => x
+                .ProcessPixelRowsAsVector4(row =>
                 {
-                    float color = MathF.Pow(row[x].X, LINEAR_GAMMA);
-                    row[x] = new Vector4(color, color, color, row[x].W);
-                }
-            })
-            .BinaryDither(dither));
+                    for (int x = 0; x < row.Length; x++)
+                    {
+                        float color = MathF.Pow(row[x].X, LINEAR_GAMMA);
+                        row[x] = new Vector4(color, color, color, row[x].W);
+                    }
+                })
+                .BinaryDither(dither));
+            }
 
             bytes = new byte[(image.Width * image.Height) >> 3];
 
@@ -95,14 +105,17 @@ class ImageProcessor
         }
         else
         {
-            Color[] colors = new Color[16];
-            for (int c = 0; c < colors.Length; c++)
+            if (ditheringMethod != DitheringMethods.None)
             {
-                float color = (float)c / (colors.Length - 1);
-                colors[c] = new Color(new Vector4(color, color, color, 1.0f));
-            }
+                Color[] colors = new Color[16];
+                for (int c = 0; c < colors.Length; c++)
+                {
+                    float color = (float)c / (colors.Length - 1);
+                    colors[c] = new Color(new Vector4(color, color, color, 1.0f));
+                }
 
-            image.Mutate(x => x.Dither(dither, scale, colors));
+                image.Mutate(x => x.Dither(dither, scale, colors));
+            }
 
             bytes = new byte[(image.Width * image.Height) >> 1];
 
