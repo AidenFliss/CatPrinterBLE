@@ -116,8 +116,7 @@ internal class Program
                     bool success = await ble.ConnectAsync();
                     if (success)
                     {
-                        await ble.SetPrintIntensity(intensity);
-                        await ble.Print(imagePath, printMode, ditheringMethod);
+                        await ble.Print(imagePath, intensity, printMode, ditheringMethod);
                     }
                 }
 

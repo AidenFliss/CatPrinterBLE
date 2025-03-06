@@ -171,21 +171,27 @@ class CatPrinter : IAsyncDisposable
         await SendCommand(CommandIds.QueryCount, new byte[] { 0x0 }, true);
     }
 
-    public async Task SetPrintIntensity(byte intensity)
+    public async Task Print(string imagePath, byte intensity, PrintModes printMode = PrintModes.Monochrome, BaseDither.Methods ditheringMethod = BaseDither.Methods.FloydSteinberg)
     {
         if (!await FindRequiredCharacteristicsAsync()) return;
 
         if (intensity > 100) intensity = 100;
-        //intensity /= 2; // Seems like a more appropriate range, as most values print very intense 
+
+        int bytesPerLine;
+        ImageProcessor.ColorModes colorMode;
+        if (printMode == PrintModes.Grayscale)
+        {
+            bytesPerLine = LINE_PIXELS_COUNT >> 1;
+            colorMode = ImageProcessor.ColorModes.Mode_4bpp;
+        }
+        else
+        {
+            bytesPerLine = LINE_PIXELS_COUNT >> 3;
+            colorMode = ImageProcessor.ColorModes.Mode_1bpp;
+            intensity /= 2; // Seems like a more appropriate range, as most values print very intense 
+        }
+
         await SendCommand(CommandIds.PrintIntensity, new byte[] { intensity }, false);
-    }
-
-    public async Task Print(string imagePath, PrintModes printMode = PrintModes.Monochrome, BaseDither.Methods ditheringMethod = BaseDither.Methods.FloydSteinberg)
-    {
-        if (!await FindRequiredCharacteristicsAsync()) return;
-
-        int bytesPerLine = printMode == PrintModes.Grayscale ? LINE_PIXELS_COUNT >> 1 : LINE_PIXELS_COUNT >> 3;
-        ImageProcessor.ColorModes colorMode = printMode == PrintModes.Grayscale ? ImageProcessor.ColorModes.Mode_4bpp : ImageProcessor.ColorModes.Mode_1bpp;
 
         byte[]? pixels = ImageProcessor.LoadAndProcess(imagePath, LINE_PIXELS_COUNT, colorMode, ditheringMethod);
         if (pixels == null) return;
@@ -209,6 +215,8 @@ class CatPrinter : IAsyncDisposable
         }
 
         await SendCommand(CommandIds.PrintDataFlush, new byte[] { 0x0 }, false);
+
+        await WaitForResponseAsync(CommandIds.PrintComplete);
     }
 
     async Task<bool> RequestGattConnectionAsync()
