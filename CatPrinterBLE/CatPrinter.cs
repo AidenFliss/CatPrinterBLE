@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using static CatPrinterBLE.ImageProcessor;
 
 namespace CatPrinterBLE;
 
@@ -171,7 +172,7 @@ class CatPrinter : IAsyncDisposable
         await SendCommand(CommandIds.QueryCount, new byte[] { 0x0 }, true);
     }
 
-    public async Task Print(string imagePath, byte intensity, PrintModes printMode = PrintModes.Monochrome, BaseDither.Methods ditheringMethod = BaseDither.Methods.FloydSteinberg)
+    public async Task Print(string imagePath, byte intensity, PrintModes printMode = PrintModes.Monochrome, DitheringMethods ditheringMethod = DitheringMethods.FloydSteinberg)
     {
         if (!await FindRequiredCharacteristicsAsync()) return;
 

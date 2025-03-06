@@ -1,6 +1,10 @@
-﻿using SkiaSharp;
+﻿using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Dithering;
 using System;
 using System.IO;
+using System.Numerics;
 
 namespace CatPrinterBLE;
 
@@ -12,9 +16,19 @@ class ImageProcessor
         Mode_4bpp
     }
 
+    public enum DitheringMethods
+    {
+        None,
+        Bayer2x2,
+        Bayer4x4,
+        Bayer8x8,
+        Bayer16x16,
+        FloydSteinberg
+    }
+
     public const float LINEAR_GAMMA = 2.2f;
 
-    public static byte[]? LoadAndProcess(string imagePath, int printWidth, ColorModes colorMode = ColorModes.Mode_1bpp, BaseDither.Methods ditheringMethod = BaseDither.Methods.FloydSteinberg)
+    public static byte[]? LoadAndProcess(string imagePath, int printWidth, ColorModes colorMode = ColorModes.Mode_1bpp, DitheringMethods ditheringMethod = DitheringMethods.None)
     {
         if (string.IsNullOrWhiteSpace(imagePath))
         {
@@ -28,90 +42,88 @@ class ImageProcessor
             return null;
         }
 
-        using SKBitmap bitmap = SKBitmap.Decode(imagePath);
+        //imagePath = @"D:\Proyectos\.NET\Cat Printer\Skia\Gradient.png";
+        //colorMode = ColorModes.Mode_1bpp;
+        //ditheringMethod = BaseDither.Methods.Bayer8x8;
 
-        // Create grayscale image resized to the printer's appropriate size
+        using Image<L8> image = Image.Load<L8>(imagePath);
 
-        float aspectRatio = (float)bitmap.Width / bitmap.Height;
-        SKImageInfo info = new SKImageInfo(printWidth, (int)(printWidth / aspectRatio), SKColorType.Gray8, SKAlphaType.Opaque);
-        using SKBitmap newBitmap = bitmap.Resize(info, new SKSamplingOptions(SKCubicResampler.Mitchell));
+        float aspectRatio2 = (float)image.Width / image.Height;
+        image.Mutate(i => i.Resize(printWidth, (int)(printWidth / aspectRatio2), KnownResamplers.Lanczos3));
 
-        Span<byte> pixels = newBitmap.GetPixelSpan();
-
-        // Dither the image if requested
-
-        if (colorMode == ColorModes.Mode_1bpp)
+        IDither dither;
+        float scale;
+        switch (ditheringMethod)
         {
-            BaseDither? dither = BaseDither.Get(ditheringMethod);
-            if (dither != null)
-            {
-                // Convert manually from sRGB bytes to linear floats to have accurate dithering results.
-                // Didn't find out a way of doing this with SkiaSharp, so let's do it manually and inefficiently for now :).
-
-                float[] pixelsF = new float[newBitmap.Width * newBitmap.Height];
-                for (int p = 0; p < pixelsF.Length; p++) pixelsF[p] = MathF.Pow(pixels[p] / 255f, LINEAR_GAMMA);
-
-                // Dither the image
-
-                dither.Dither(pixelsF, newBitmap.Width, newBitmap.Height);
-
-                // Convert back to sRGB bytes
-
-                for (int p = 0; p < pixelsF.Length; p++) pixels[p] = (byte)(MathF.Pow(pixelsF[p], 1 / LINEAR_GAMMA) * 255f);
-            }
+            case DitheringMethods.Bayer2x2: dither = KnownDitherings.Bayer2x2; scale = 0.2f; break;
+            case DitheringMethods.Bayer4x4: dither = KnownDitherings.Bayer4x4; scale = 0.2f; break;
+            case DitheringMethods.Bayer8x8: dither = KnownDitherings.Bayer8x8; scale = 0.2f; break;
+            case DitheringMethods.Bayer16x16: dither = KnownDitherings.Bayer16x16; scale = 0.2f; break;
+            default: dither = KnownDitherings.FloydSteinberg; scale = 1.0f; break;
         }
-
-#if DEBUG
-        using (FileStream fs = File.Create("DitheredImage2.png"))
-        {
-            newBitmap.Encode(fs, SKEncodedImageFormat.Png, 100);
-        }
-#endif
 
         byte[] bytes;
 
-        switch (colorMode)
+        if (colorMode == ColorModes.Mode_1bpp)
         {
-            case ColorModes.Mode_4bpp:
-
-                bytes = new byte[(newBitmap.Width * newBitmap.Height) >> 1];
-                for (int b = 0; b < bytes.Length; b++)
+            image.Mutate(x => x
+            .ProcessPixelRowsAsVector4(row =>
+            {
+                for (int x = 0; x < row.Length; x++)
                 {
-                    byte bits = 0;
-                    int p = b << 1;
-
-                    byte p0 = (byte)((255 - pixels[p + 0]) >> 4);
-                    byte p1 = (byte)((255 - pixels[p + 1]) >> 4);
-
-                    bits |= (byte)(p0 << 4);
-                    bits |= (byte)(p1 << 0);
-                    bytes[b] = bits;
+                    float color = MathF.Pow(row[x].X, LINEAR_GAMMA);
+                    row[x] = new Vector4(color, color, color, row[x].W);
                 }
+            })
+            .BinaryDither(dither));
 
-                break;
+            bytes = new byte[(image.Width * image.Height) >> 3];
 
-            default:
-
-                // Convert to 1bpp by default
-
-                bytes = new byte[(newBitmap.Width * newBitmap.Height) >> 3];
-                for (int b = 0; b < bytes.Length; b++)
+            image.ProcessPixelRows(accessor =>
+            {
+                for (int y = 0; y < accessor.Height; y++)
                 {
-                    byte bits = 0;
-                    int p = b << 3;
-                    if (pixels[p + 0] < 128) bits |= (1 << 0);
-                    if (pixels[p + 1] < 128) bits |= (1 << 1);
-                    if (pixels[p + 2] < 128) bits |= (1 << 2);
-                    if (pixels[p + 3] < 128) bits |= (1 << 3);
-                    if (pixels[p + 4] < 128) bits |= (1 << 4);
-                    if (pixels[p + 5] < 128) bits |= (1 << 5);
-                    if (pixels[p + 6] < 128) bits |= (1 << 6);
-                    if (pixels[p + 7] < 128) bits |= (1 << 7);
-                    bytes[b] = bits;
-                }
+                    Span<L8> pixelRow = accessor.GetRowSpan(y);
 
-                break;
+                    for (int x = 0; x < pixelRow.Length; x++)
+                    {
+                        byte pixel = (byte)((255 - pixelRow[x].PackedValue) >> 7);
+                        bytes[(y * accessor.Width + x) >> 3] |= (byte)(pixel << (x & 7));
+                    }
+                }
+            });
         }
+        else
+        {
+            Color[] colors = new Color[16];
+            for (int c = 0; c < colors.Length; c++)
+            {
+                float color = (float)c / (colors.Length - 1);
+                colors[c] = new Color(new Vector4(color, color, color, 1.0f));
+            }
+
+            image.Mutate(x => x.Dither(dither, scale, colors));
+
+            bytes = new byte[(image.Width * image.Height) >> 1];
+
+            image.ProcessPixelRows(accessor =>
+            {
+                for (int y = 0; y < accessor.Height; y++)
+                {
+                    Span<L8> pixelRow = accessor.GetRowSpan(y);
+
+                    for (int x = 0; x < pixelRow.Length; x++)
+                    {
+                        byte pixel = (byte)((255 - pixelRow[x].PackedValue) >> 4);
+                        bytes[(y * accessor.Width + x) >> 1] |= (byte)(pixel << ((x & 1) << 4));
+                    }
+                }
+            });
+        }
+
+#if DEBUG
+        image.Save("DitheredImage2.png");
+#endif
 
         return bytes;
     }
