@@ -82,7 +82,7 @@ Prints some device information. Useful for testing purposes.
 CatPrinterBLE (-qc | --queryCount)
 ```
 
-No idea what is this, but the printer supports this command that returns some FF values. The name query count comes from machine translating some Chinese comments in the decompiled app code. I probably shouldn't expose this...
+No idea what this is, but the printer supports this command that returns some FF values. The name query count comes from machine translating some Chinese comments in the decompiled app code. I probably shouldn't expose this...
 
 ## Roadmap
 
