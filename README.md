@@ -4,7 +4,7 @@
   <img title="Cat Printer MXW01 in action!" src="/Photo.jpg">
 </p>
 
-This program provides basic functionality to use one of the most recent models (as of March 2025) of Cat Printers: model `MXW01`. It can load any image, and it will resize it to the proper resolution and apply a dithering patten to smooth the gradients after the color reduction.
+This is a command line program that provides basic functionality to use one of the most recent models (as of March 2025) of Cat Printers: model `MXW01`. It can load any image, and it will resize it to the proper resolution and apply a dithering patten to smooth the gradients after the color reduction.
 
 It requires the [.NET 8 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and it supports Windows and, theoretically, Linux, but this has not been tested.
 
