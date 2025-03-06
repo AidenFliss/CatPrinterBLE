@@ -233,16 +233,16 @@ class CatPrinter : IAsyncDisposable
             return true;
         }
 
-        Console.WriteLine("Connecting to GATT server...");
+        Console.Write("Connecting to GATT server... ");
         await printerDevice.Gatt.ConnectAsync();
 
         if (!printerDevice.Gatt.IsConnected)
         {
-            Console.WriteLine("Failed to connect to the GATT server.");
+            Console.WriteLine("Fail.");
             return false;
         }
 
-        Console.WriteLine("Connected to GATT server.");
+        Console.WriteLine("Success.");
         Console.WriteLine();
 
         return true;
@@ -302,7 +302,9 @@ class CatPrinter : IAsyncDisposable
     {
         if (e.Value == null) return;
 
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine($"Received notification: {ByteArrayToString(e.Value)}");
+        Console.ForegroundColor = ConsoleColor.Gray;
 
         if (e.Value[0] != 0x22 || e.Value[1] != 0x21)
         {
@@ -365,13 +367,15 @@ class CatPrinter : IAsyncDisposable
 
             case CommandIds.GetVersion:
                 string version = Encoding.UTF8.GetString(e.Value, 6, dataLength);
-                Console.WriteLine($"Version - {version}");
+                Console.WriteLine($"Version: {version}");
                 break;
 
             default:
                 Console.WriteLine($"Unexpected command with ID {commandId}.");
                 return;
         }
+
+        Console.WriteLine();
 
         ResponseReceived(commandId);
     }
@@ -398,7 +402,7 @@ class CatPrinter : IAsyncDisposable
         byte[] command = CreateCommand(commandId, commandData);
         Console.Write($"Sending {commandId} command... ");
         await printCharacteristic!.WriteValueWithoutResponseAsync(command);
-        Console.WriteLine("Finished");
+        Console.WriteLine("Finished\n");
 
         if (waitForResponse) await WaitForResponseAsync(commandId);
     }
