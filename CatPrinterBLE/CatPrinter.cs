@@ -331,7 +331,7 @@ class CatPrinter : IAsyncDisposable
                         case 0x0: statusDetails = "Standby"; break;
                         case 0x1: statusDetails = "Printing"; break;
                         case 0x2: statusDetails = "Feeding paper"; break;
-                        case 0x3: statusDetails = "Rejecting paper"; break;
+                        case 0x3: statusDetails = "Ejecting paper"; break;
                     }
                 }
                 else
