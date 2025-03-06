@@ -354,7 +354,7 @@ class CatPrinter : IAsyncDisposable
 
             case CommandIds.Print:
                 bool printStatusOk = e.Value[6] == 0;
-                Console.WriteLine($"Print status: {printStatusOk}");
+                Console.WriteLine($"Print status: {(printStatusOk ? "Ok" : "Failure")}");
                 break;
 
             case CommandIds.PrintComplete:
