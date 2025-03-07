@@ -19,50 +19,6 @@ internal class Program
 
         switch (args[0])
         {
-            case "-di":
-            case "--deviceInfo":
-
-                await using (CatPrinter ble = new CatPrinter())
-                {
-                    bool success = await ble.ConnectAsync();
-                    if (success) await ble.PrintDeviceInfoAsync();
-                }
-
-                break;
-
-            case "-ps":
-            case "--printerStatus":
-
-                await using (CatPrinter ble = new CatPrinter())
-                {
-                    bool success = await ble.ConnectAsync();
-                    if (success) await ble.GetPrinterStatusAsync();
-                }
-
-                break;
-
-            case "-bl":
-            case "--batteryLevel":
-
-                await using (CatPrinter ble = new CatPrinter())
-                {
-                    bool success = await ble.ConnectAsync();
-                    if (success) await ble.GetBatteryLevelAsync();
-                }
-
-                break;
-
-            case "-qc":
-            case "--queryCount":
-
-                await using (CatPrinter ble = new CatPrinter())
-                {
-                    bool success = await ble.ConnectAsync();
-                    if (success) await ble.GetQueryCount();
-                }
-
-                break;
-
             case "-p":
             case "--print":
 
@@ -109,6 +65,66 @@ internal class Program
                     }
                 }
 
+                break;
+
+            case "-ps":
+            case "--printerStatus":
+
+                await using (CatPrinter ble = new CatPrinter())
+                {
+                    bool success = await ble.ConnectAsync();
+                    if (success) await ble.GetPrinterStatusAsync();
+                }
+
+                break;
+
+            case "-bl":
+            case "--batteryLevel":
+
+                await using (CatPrinter ble = new CatPrinter())
+                {
+                    bool success = await ble.ConnectAsync();
+                    if (success) await ble.GetBatteryLevelAsync();
+                }
+
+                break;
+
+            case "-di":
+            case "--deviceInfo":
+
+                await using (CatPrinter ble = new CatPrinter())
+                {
+                    bool success = await ble.ConnectAsync();
+                    if (success) await ble.PrintDeviceInfoAsync();
+                }
+
+                break;
+
+            case "-pt":
+            case "--printType":
+
+                await using (CatPrinter ble = new CatPrinter())
+                {
+                    bool success = await ble.ConnectAsync();
+                    if (success) await ble.GetPrintType();
+                }
+
+                break;
+
+            case "-qc":
+            case "--queryCount":
+
+                await using (CatPrinter ble = new CatPrinter())
+                {
+                    bool success = await ble.ConnectAsync();
+                    if (success) await ble.GetQueryCount();
+                }
+
+                break;
+
+            default:
+
+                ShowUsage();
                 break;
         }
 
@@ -184,6 +200,13 @@ internal class Program
         Console.WriteLine("  CatPrinterBLE (-di | --deviceInfo)\n");
         Console.ForegroundColor = ConsoleColor.Gray;
         Console.WriteLine("    Prints some device information. Useful for debugging.\n");
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine("  CatPrinterBLE (-pt | --printType)\n");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.WriteLine("    This returns some information abou the \"print type\" or maybe \"printer type\".");
+        Console.WriteLine("    I still haven't figured out what this means exactly. Types are decompiled phonetically written Chinese.");
+        Console.WriteLine("    This can also be obtained with the -ps command.\n");
 
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine("  CatPrinterBLE (-qc | --queryCount)\n");

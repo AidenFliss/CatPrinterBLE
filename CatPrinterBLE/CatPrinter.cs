@@ -31,9 +31,11 @@ class CatPrinter : IAsyncDisposable
         BatteryLevel = 0xAB,
         CancelPrint = 0xAC,
         PrintDataFlush = 0xAD,
+        UnknownAE = 0xAE,
+        GetPrintType = 0xB0,
         GetVersion = 0xB1,
-        UnknownB2 = 0xB2,
-        UnknownB3 = 0xB3
+        UnknownB2 = 0xB2,  // Something about "learn"? print_cmd("2221B2000100000000", "V5X") Also related to A3?
+        UnknownB3 = 0xB3   // Something about sign and encryption?
     }
 
     public enum PrintModes : byte
@@ -147,9 +149,6 @@ class CatPrinter : IAsyncDisposable
         Console.WriteLine();
     }
 
-    /// <summary>
-    /// Gets the status of the printer.
-    /// </summary>
     public async Task GetPrinterStatusAsync()
     {
         if (!await FindRequiredCharacteristicsAsync()) return;
@@ -170,6 +169,13 @@ class CatPrinter : IAsyncDisposable
         if (!await FindRequiredCharacteristicsAsync()) return;
 
         await SendCommand(CommandIds.QueryCount, new byte[] { 0x0 }, true);
+    }
+
+    public async Task GetPrintType()
+    {
+        if (!await FindRequiredCharacteristicsAsync()) return;
+
+        await SendCommand(CommandIds.GetPrintType, new byte[] { 0x0 }, true);
     }
 
     public async Task Print(string imagePath, byte intensity, PrintModes printMode = PrintModes.Monochrome, DitheringMethods ditheringMethod = DitheringMethods.None)
@@ -319,6 +325,7 @@ class CatPrinter : IAsyncDisposable
         switch (commandId)
         {
             case CommandIds.GetStatus:
+            {
                 byte batteryLevel = e.Value[9];
                 byte temperature = e.Value[10];
 
@@ -347,32 +354,56 @@ class CatPrinter : IAsyncDisposable
 
                 Console.WriteLine($"Status: {(statusOk ? "Ok" : "Error")} ({statusDetails}), Battery: {batteryLevel}, Temperature: {temperature}");
                 break;
-
+            }
             case CommandIds.QueryCount:
+            {
                 Console.WriteLine($"Query count: {ByteArrayToString(e.Value, 6, 6)}");
                 break;
-
+            }
             case CommandIds.Print:
+            {
                 bool printStatusOk = e.Value[6] == 0;
                 Console.WriteLine($"Print status: {(printStatusOk ? "Ok" : "Failure")}");
                 break;
-
+            }
             case CommandIds.PrintComplete:
+            {
                 Console.WriteLine("Printing finished.");
                 break;
-
+            }
             case CommandIds.BatteryLevel:
+            {
                 Console.WriteLine($"Battery level: {e.Value[6]}");
                 break;
-
-            case CommandIds.GetVersion:
-                string version = Encoding.UTF8.GetString(e.Value, 6, dataLength);
-                Console.WriteLine($"Version: {version}");
+            }
+            case CommandIds.GetPrintType:
+            {
+                string type;
+                switch (e.Value[6])
+                {
+                    case 0x01: type = "\"gaoya\" (High pressure / voltage / density?)"; break;
+                    case 0xFF: type = "\"weishibie\" (???)"; break;
+                    default: type = "\"diya\" (Low pressure / voltage / density?)"; break;
+                }
+                Console.WriteLine($"Print type: {type}");
                 break;
-
+            }
+            case CommandIds.GetVersion:
+            {
+                string version = Encoding.UTF8.GetString(e.Value, 6, dataLength);
+                string type;
+                switch (e.Value[14])
+                {
+                    case 0x32: type = "\"gaoya\" (High pressure / voltage / density?)"; break;
+                    case 0x31: type = "\"diya\" (Low pressure / voltage / density?)"; break;
+                    default: type = "\"weishibie\" (???)"; break;
+                }
+                Console.WriteLine($"Version: {version}, Print type: {type}");
+                break;
+            }
             default:
                 Console.WriteLine($"Unexpected command with ID {commandId}.");
-                return;
+                break;
         }
 
         Console.WriteLine();
