@@ -4,7 +4,7 @@
   <img title="Cat Printer MXW01 in action!" src="/Photo.jpg">
 </p>
 
-This is a command line program that provides basic functionality to use one of the most recent models (as of March 2025) of Cat Printers: model `MXW01`. It can load any image, and it will resize it to the proper resolution and apply a dithering patten to smooth the gradients after the color reduction.
+This is a command line program that provides basic functionality to use one of the most recent models (as of March 2025) of Cat Printers: model `MXW01`. It can load any image, it will resize it to the proper resolution and apply a dithering pattern to smooth the gradients after the color reduction.
 
 It requires the [.NET 8 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and it supports Windows and, theoretically, Linux, but this has not been tested.
 
@@ -12,13 +12,13 @@ It requires the [.NET 8 Runtime](https://dotnet.microsoft.com/en-us/download/dot
 
 I recently acquired one of these thermal printers to be able to print small labels quickly. The main problem is that these kind of printers require using a proprietary and shady Chinese phone application that requires creating an account and who knows what else they do under the hood.
 
-I searched for an open source alternative, and even though there are multiple programs that have successfully reverse-engineered these printers, my specific model, the `MXW01`, seems to be fairly recent, works very different to other models, and it is barely understood. The only project I've found that has been able to implement some functionality to make this printer work (https://github.com/eerimoq/moblin), is iOS specific, and doesn't implement all the features.
+I searched for an open source alternative, and even though there are multiple projects that have successfully reverse-engineered similar printers, my specific model, the `MXW01`, seems to be fairly recent, works very different to other models, and it is barely understood. The only project I've found that has been able to implement some functionality to make this printer work (https://github.com/eerimoq/moblin), is iOS specific, and doesn't implement all the features.
 
-So I wanted to try to do my own program as a fun challenge. I've never worked with Bluetooth or BLE before, so it's been a learning experience. The aformentioned project served me as a starting point, but then I was able to do my own discoveries by further reverse-engineering the Chinese app.
+So I wanted to try to do my own program as a fun challenge. I've never worked with Bluetooth or BLE before, so it's been a learning experience. The aforementioned project served me as a starting point, but then I was able to do my own discoveries by further reverse-engineering the Chinese app.
 
 ## Features
 
-This program does not aim to be an image editor where you can easily add images and text that can be printed. This will load an existing image that you can create in any image editing software, resize it to the resolution this printer uses, convert it to monochrome or grayscale and apply some dithering to smooth the gradients.
+This program does not aim to be an editor where you can easily add images and text that can be printed. This will load an existing image that you can create in any image editing software, resize it to the resolution this printer uses, convert it to monochrome or grayscale and apply some dithering to smooth the gradients.
 
 - Many image formats supported, like `BMP`, `GIF`, `JPEG`, `PNG`, `TGA` and `WebP`.
 - Print in two modes: Black and white monochrome (1 bit per pixel) and grayscale (4 bits per pixel).
