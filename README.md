@@ -6,7 +6,7 @@
 
 This is a command line program that provides basic functionality to use one of the most recent models (as of March 2025) of Cat Printers: model `MXW01`. It can load any image, it will resize it to the proper resolution and apply a dithering pattern to smooth the gradients after the color reduction.
 
-It requires the [.NET 8 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and it supports Windows and, theoretically, Linux, but this has not been tested.
+It requires the [.NET 8 Runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) and it supports only Windows for now.
 
 ## Why
 
@@ -66,7 +66,7 @@ It provides information about the battery level, if it has paper, its temperatur
 CatPrinterBLE (-bl | --batteryLevel)
 ```
 
-It provides the current battery level. This can also be shown with the -ps command.
+It provides the current battery level. This can also be shown with the `-ps` command.
 
 ### Show the device info
 
@@ -76,6 +76,14 @@ CatPrinterBLE (-di | --deviceInfo)
 
 Prints some device information. Useful for testing purposes.
 
+### Get the print type
+
+```
+CatPrinterBLE (-pt | --printType)
+```
+
+This returns some information abou the "print type" or maybe "printer type". I still haven't figured out what this means exactly. Types are decompiled phonetically written Chinese. This can also be obtained with the `-ps` command.
+
 ### Get the "Query count"
 
 ```
@@ -83,6 +91,10 @@ CatPrinterBLE (-qc | --queryCount)
 ```
 
 No idea what this is, but the printer supports this command that returns some FF values. The name query count comes from machine translating some Chinese comments in the decompiled app code. I probably shouldn't expose this...
+
+## Changelog
+
+You can check the changelog [here](https://github.com/MaikelChan/CatPrinterBLE/blob/v2/CHANGELOG.md).
 
 ## Roadmap
 
