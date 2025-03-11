@@ -195,7 +195,6 @@ class CatPrinter : IAsyncDisposable
         {
             bytesPerLine = LINE_PIXELS_COUNT >> 3;
             colorMode = ColorModes.Mode_1bpp;
-            intensity /= 2; // Seems like a more appropriate range, as most values print very intense 
         }
 
         await SendCommand(CommandIds.PrintIntensity, new byte[] { intensity }, false);
