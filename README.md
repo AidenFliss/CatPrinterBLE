@@ -94,7 +94,7 @@ No idea what this is, but the printer supports this command that returns some FF
 
 ## Changelog
 
-You can check the changelog [here](https://github.com/MaikelChan/CatPrinterBLE/blob/v2/CHANGELOG.md).
+You can check the changelog [here](https://github.com/MaikelChan/CatPrinterBLE/blob/main/CHANGELOG.md).
 
 ## Roadmap
 
