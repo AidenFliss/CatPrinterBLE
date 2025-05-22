@@ -21,7 +21,7 @@ internal class Program
         {
             case "-p":
             case "--print":
-
+            {
                 if (args.Length < 5)
                 {
                     ShowUsage();
@@ -66,10 +66,27 @@ internal class Program
                 }
 
                 break;
+            }
+            case "-ep":
+            case "--ejectPaper":
+            {
+                if (!ushort.TryParse(args[1], out ushort lineCount))
+                {
+                    Console.WriteLine($"Error: Invalid line count ({args[1]}).");
+                    return;
+                }
 
+                await using (CatPrinter ble = new CatPrinter())
+                {
+                    bool success = await ble.ConnectAsync();
+                    if (success) await ble.EjectPaper(lineCount);
+                }
+
+                break;
+            }
             case "-rp":
             case "--retractPaper":
-
+            {
                 if (!ushort.TryParse(args[1], out ushort lineCount))
                 {
                     Console.WriteLine($"Error: Invalid line count ({args[1]}).");
@@ -83,10 +100,10 @@ internal class Program
                 }
 
                 break;
-
+            }
             case "-ps":
             case "--printerStatus":
-
+            {
                 await using (CatPrinter ble = new CatPrinter())
                 {
                     bool success = await ble.ConnectAsync();
@@ -94,10 +111,10 @@ internal class Program
                 }
 
                 break;
-
+            }
             case "-bl":
             case "--batteryLevel":
-
+            {
                 await using (CatPrinter ble = new CatPrinter())
                 {
                     bool success = await ble.ConnectAsync();
@@ -105,10 +122,10 @@ internal class Program
                 }
 
                 break;
-
+            }
             case "-di":
             case "--deviceInfo":
-
+            {
                 await using (CatPrinter ble = new CatPrinter())
                 {
                     bool success = await ble.ConnectAsync();
@@ -116,10 +133,10 @@ internal class Program
                 }
 
                 break;
-
+            }
             case "-pt":
             case "--printType":
-
+            {
                 await using (CatPrinter ble = new CatPrinter())
                 {
                     bool success = await ble.ConnectAsync();
@@ -127,10 +144,10 @@ internal class Program
                 }
 
                 break;
-
+            }
             case "-qc":
             case "--queryCount":
-
+            {
                 await using (CatPrinter ble = new CatPrinter())
                 {
                     bool success = await ble.ConnectAsync();
@@ -138,11 +155,12 @@ internal class Program
                 }
 
                 break;
-
+            }
             default:
-
+            {
                 ShowUsage();
                 break;
+            }
         }
 
         //Console.ReadKey();
@@ -202,6 +220,15 @@ internal class Program
         Console.WriteLine("                             - Bayer16x16");
         Console.WriteLine("                             - FloydSteinberg");
         Console.WriteLine("      - image_path       : The path to the image to print.\n");
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine("  CatPrinterBLE (-ep | --ejectPaper) <line_count>\n");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.WriteLine("    Ejects the paper a specific amount of lines.\n");
+        Console.WriteLine("    Example:");
+        Console.WriteLine("      CatPrinterBLE -ep 20\n");
+        Console.WriteLine("    Parameters:");
+        Console.WriteLine("      - line_count       : The amount of lines to eject.\n");
 
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine("  CatPrinterBLE (-rp | --retractPaper) <line_count>\n");

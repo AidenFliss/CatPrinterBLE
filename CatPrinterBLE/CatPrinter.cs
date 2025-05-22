@@ -24,7 +24,7 @@ class CatPrinter : IAsyncDisposable
     {
         GetStatus = 0xA1,
         PrintIntensity = 0xA2,
-        UnknownA3 = 0xA3,
+        EjectPaper = 0xA3,
         RetractPaper = 0xA4,
         QueryCount = 0xA7,
         Print = 0xA9,
@@ -177,6 +177,17 @@ class CatPrinter : IAsyncDisposable
         if (!await FindRequiredCharacteristicsAsync()) return;
 
         await SendCommand(CommandIds.GetPrintType, new byte[] { 0x0 }, true);
+    }
+
+    public async Task EjectPaper(ushort lineCount)
+    {
+        if (!await FindRequiredCharacteristicsAsync()) return;
+
+        byte[] commandData = new byte[2];
+        commandData[0] = (byte)((lineCount >> 0) & 0xFF);
+        commandData[1] = (byte)((lineCount >> 8) & 0xFF);
+
+        await SendCommand(CommandIds.EjectPaper, commandData, false);
     }
 
     public async Task RetractPaper(ushort lineCount)
@@ -364,6 +375,11 @@ class CatPrinter : IAsyncDisposable
                 }
 
                 Console.WriteLine($"Status: {(statusOk ? "Ok" : "Error")} ({statusDetails}), Battery: {batteryLevel}, Temperature: {temperature}");
+                break;
+            }
+            case CommandIds.EjectPaper:
+            {
+                Console.WriteLine("Ejecting paper...");
                 break;
             }
             case CommandIds.RetractPaper:
