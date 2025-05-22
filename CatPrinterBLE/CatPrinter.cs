@@ -86,19 +86,45 @@ class CatPrinter : IAsyncDisposable
 
         Console.WriteLine("Trying to connect to MXW01...");
 
-        RequestDeviceOptions options = new RequestDeviceOptions();
+        //RequestDeviceOptions options = new RequestDeviceOptions();
+        //options.Filters.Add(new BluetoothLEScanFilter() { Name = "MXW01" });
+        //BluetoothDevice? device = await Bluetooth.RequestDeviceAsync(options);
+
+        BluetoothDevice? device = null;
+
+        void Bluetooth_AdvertisementReceived(object? sender, BluetoothAdvertisingEvent e)
+        {
+            device = e.Device;
+        }
+
+        Bluetooth.AdvertisementReceived += Bluetooth_AdvertisementReceived;
+
+        BluetoothLEScanOptions options = new BluetoothLEScanOptions();
         options.Filters.Add(new BluetoothLEScanFilter() { Name = "MXW01" });
-        BluetoothDevice? device = await Bluetooth.RequestDeviceAsync(options);
+        BluetoothLEScan scan = await Bluetooth.RequestLEScanAsync(options);
+
+        const int TIMEOUT_MS = 10000;
+        const int CHECK_INTERVAL_MS = 200;
+
+        for (int i = 0; i < TIMEOUT_MS / CHECK_INTERVAL_MS; i++)
+        {
+            await Task.Delay(CHECK_INTERVAL_MS);
+
+            if (device != null) break;
+        }
+
+        scan.Stop();
+        Bluetooth.AdvertisementReceived -= Bluetooth_AdvertisementReceived;
 
         if (device == null)
         {
-            Console.WriteLine("Unable to connect to MXW01.");
+            Console.WriteLine("No MXW01 device found.");
             return false;
         }
 
         printerDevice = device;
 
-        Console.WriteLine($"Found device - Name: {device.Name}, ID: {device.Id}.");
+        Console.WriteLine($"Found device - Name: {printerDevice.Name}, ID: {printerDevice.Id}.");
         Console.WriteLine();
 
         await RequestGattConnectionAsync();
