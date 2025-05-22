@@ -46,6 +46,9 @@ class CatPrinter : IAsyncDisposable
         Grayscale = 0x2
     }
 
+    const string DEVICE_NAME = "MXW01";
+    const int FIND_DEVICE_TIMEOUT_MS = 10000;
+    const int FIND_DEVICE_CHECK_INTERVAL_MS = 200;
     const int LINE_PIXELS_COUNT = 384;
 
     public CatPrinter()
@@ -87,28 +90,27 @@ class CatPrinter : IAsyncDisposable
         Console.WriteLine("Trying to connect to MXW01...");
 
         //RequestDeviceOptions options = new RequestDeviceOptions();
-        //options.Filters.Add(new BluetoothLEScanFilter() { Name = "MXW01" });
+        //options.Filters.Add(new BluetoothLEScanFilter() { Name = DEVICE_NAME });
         //BluetoothDevice? device = await Bluetooth.RequestDeviceAsync(options);
 
         BluetoothDevice? device = null;
 
         void Bluetooth_AdvertisementReceived(object? sender, BluetoothAdvertisingEvent e)
         {
+            if (e.Device.Name != DEVICE_NAME) return;
+
             device = e.Device;
         }
 
         Bluetooth.AdvertisementReceived += Bluetooth_AdvertisementReceived;
 
         BluetoothLEScanOptions options = new BluetoothLEScanOptions();
-        options.Filters.Add(new BluetoothLEScanFilter() { Name = "MXW01" });
+        options.Filters.Add(new BluetoothLEScanFilter() { Name = DEVICE_NAME });
         BluetoothLEScan scan = await Bluetooth.RequestLEScanAsync(options);
 
-        const int TIMEOUT_MS = 10000;
-        const int CHECK_INTERVAL_MS = 200;
-
-        for (int i = 0; i < TIMEOUT_MS / CHECK_INTERVAL_MS; i++)
+        for (int i = 0; i < FIND_DEVICE_TIMEOUT_MS / FIND_DEVICE_CHECK_INTERVAL_MS; i++)
         {
-            await Task.Delay(CHECK_INTERVAL_MS);
+            await Task.Delay(FIND_DEVICE_CHECK_INTERVAL_MS);
 
             if (device != null) break;
         }
