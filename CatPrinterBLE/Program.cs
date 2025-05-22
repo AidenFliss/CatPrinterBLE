@@ -67,6 +67,23 @@ internal class Program
 
                 break;
 
+            case "-rp":
+            case "--retractPaper":
+
+                if (!ushort.TryParse(args[1], out ushort lineCount))
+                {
+                    Console.WriteLine($"Error: Invalid line count ({args[1]}).");
+                    return;
+                }
+
+                await using (CatPrinter ble = new CatPrinter())
+                {
+                    bool success = await ble.ConnectAsync();
+                    if (success) await ble.RetractPaper(lineCount);
+                }
+
+                break;
+
             case "-ps":
             case "--printerStatus":
 
@@ -185,6 +202,15 @@ internal class Program
         Console.WriteLine("                             - Bayer16x16");
         Console.WriteLine("                             - FloydSteinberg");
         Console.WriteLine("      - image_path       : The path to the image to print.\n");
+
+        Console.ForegroundColor = ConsoleColor.White;
+        Console.WriteLine("  CatPrinterBLE (-rp | --retractPaper) <line_count>\n");
+        Console.ForegroundColor = ConsoleColor.Gray;
+        Console.WriteLine("    Retracts the paper a specific amount of lines.\n");
+        Console.WriteLine("    Example:");
+        Console.WriteLine("      CatPrinterBLE -rp 20\n");
+        Console.WriteLine("    Parameters:");
+        Console.WriteLine("      - line_count       : The amount of lines to retract.\n");
 
         Console.ForegroundColor = ConsoleColor.White;
         Console.WriteLine("  CatPrinterBLE (-ps | --printerStatus)\n");

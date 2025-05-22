@@ -25,6 +25,7 @@ class CatPrinter : IAsyncDisposable
         GetStatus = 0xA1,
         PrintIntensity = 0xA2,
         UnknownA3 = 0xA3,
+        RetractPaper = 0xA4,
         QueryCount = 0xA7,
         Print = 0xA9,
         PrintComplete = 0xAA,
@@ -176,6 +177,17 @@ class CatPrinter : IAsyncDisposable
         if (!await FindRequiredCharacteristicsAsync()) return;
 
         await SendCommand(CommandIds.GetPrintType, new byte[] { 0x0 }, true);
+    }
+
+    public async Task RetractPaper(ushort lineCount)
+    {
+        if (!await FindRequiredCharacteristicsAsync()) return;
+
+        byte[] commandData = new byte[2];
+        commandData[0] = (byte)((lineCount >> 0) & 0xFF);
+        commandData[1] = (byte)((lineCount >> 8) & 0xFF);
+
+        await SendCommand(CommandIds.RetractPaper, commandData, false);
     }
 
     public async Task Print(string imagePath, byte intensity, PrintModes printMode = PrintModes.Monochrome, DitheringMethods ditheringMethod = DitheringMethods.None)
@@ -352,6 +364,11 @@ class CatPrinter : IAsyncDisposable
                 }
 
                 Console.WriteLine($"Status: {(statusOk ? "Ok" : "Error")} ({statusDetails}), Battery: {batteryLevel}, Temperature: {temperature}");
+                break;
+            }
+            case CommandIds.RetractPaper:
+            {
+                Console.WriteLine("Retracting paper...");
                 break;
             }
             case CommandIds.QueryCount:
