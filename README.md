@@ -40,6 +40,7 @@ CatPrinterBLE -p 100 1bpp FloydSteinberg "C:\CoolCat.png"
 ```
 
 #### Parameters
+
 - `intensity`: How dark the printing will be. Values from 0 to 100.
 - `print_mode`: The amount of colors that will be used for printing. Possible values:
   - `1bpp`: Monochrome, pure black and white. Faster printing, lower quality.
@@ -51,6 +52,44 @@ CatPrinterBLE -p 100 1bpp FloydSteinberg "C:\CoolCat.png"
   - `Bayer16x16`
   - `FloydSteinberg`
 - image_path: The path to the image to print.
+
+### Eject paper
+
+```
+CatPrinterBLE (-ep | --ejectPaper) <line_count>
+```
+
+Ejects the paper a specific amount of lines.
+
+
+#### Example
+
+```
+CatPrinterBLE -ep 20
+```
+
+#### Parameters
+
+- `line_count`: The amount of lines to eject.
+
+### Retract paper
+
+```
+CatPrinterBLE (-rp | --retractPaper) <line_count>
+```
+
+Retracts the paper a specific amount of lines.
+
+
+#### Example
+
+```
+CatPrinterBLE -rp 20
+```
+
+#### Parameters
+
+- `line_count`: The amount of lines to retract.
 
 ### Get the status of the printer
 
