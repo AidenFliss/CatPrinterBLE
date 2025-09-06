@@ -87,7 +87,7 @@ class CatPrinter : IAsyncDisposable
             return true;
         }
 
-        Console.WriteLine("Trying to connect to MXW01...");
+        Logger.LogLine("Trying to connect to MXW01...");
 
         //RequestDeviceOptions options = new RequestDeviceOptions();
         //options.Filters.Add(new BluetoothLEScanFilter() { Name = DEVICE_NAME });
@@ -120,14 +120,22 @@ class CatPrinter : IAsyncDisposable
 
         if (device == null)
         {
-            Console.WriteLine("No MXW01 device found.");
+            Logger.LogLine("No MXW01 device found.");
             return false;
         }
 
         printerDevice = device;
 
-        Console.WriteLine($"Found device - Name: {printerDevice.Name}, ID: {printerDevice.Id}.");
-        Console.WriteLine();
+        if (Logger.Verbose)
+        {
+            Logger.LogLine($"Found device - Name: {printerDevice.Name}, ID: {printerDevice.Id}.");
+        }
+        else
+        {
+            Logger.LogLine($"Found device!");
+        }
+
+        Logger.LogLine();
 
         await RequestGattConnectionAsync();
 
@@ -143,19 +151,19 @@ class CatPrinter : IAsyncDisposable
 
         List<GattService> services = await printerDevice!.Gatt.GetPrimaryServicesAsync();
 
-        Console.WriteLine("#### Print Info ------------------------------------------------------------------------------------");
-        Console.WriteLine();
+        Logger.LogLine("#### Print Info ------------------------------------------------------------------------------------");
+        Logger.LogLine();
 
-        Console.WriteLine($"Services found: {services.Count}.");
-        Console.WriteLine();
+        Logger.LogLine($"Services found: {services.Count}.");
+        Logger.LogLine();
 
         foreach (var service in services)
         {
             string name = GattServiceUuids.GetServiceName(service.Uuid);
-            Console.WriteLine($"  * UUID: {service.Uuid.Value}, Name: {name}");
+            Logger.LogLine($"  * UUID: {service.Uuid.Value}, Name: {name}");
 
             IReadOnlyList<GattCharacteristic> characteristics = await service.GetCharacteristicsAsync();
-            Console.WriteLine($"      Characteristics found: {characteristics.Count}.");
+            Logger.LogLine($"      Characteristics found: {characteristics.Count}.");
 
             foreach (GattCharacteristic characteristic in characteristics)
             {
@@ -163,19 +171,19 @@ class CatPrinter : IAsyncDisposable
                 if ((properties & GattCharacteristicProperties.Read) != 0)
                 {
                     byte[] value = await characteristic.ReadValueAsync();
-                    Console.WriteLine($"        - UUID: {characteristic.Uuid.Value}, Properties: {properties}, Value: {ByteArrayToString(value)}");
+                    Logger.LogLine($"        - UUID: {characteristic.Uuid.Value}, Properties: {properties}, Value: {ByteArrayToString(value)}");
                 }
                 else
                 {
-                    Console.WriteLine($"        - UUID: {characteristic.Uuid.Value}, Properties: {properties}");
+                    Logger.LogLine($"        - UUID: {characteristic.Uuid.Value}, Properties: {properties}");
                 }
             }
 
-            Console.WriteLine();
+            Logger.LogLine();
         }
 
-        Console.WriteLine("#### --------------------------------------------------------------------------------------------------");
-        Console.WriteLine();
+        Logger.LogLine("#### --------------------------------------------------------------------------------------------------");
+        Logger.LogLine();
     }
 
     public async Task GetPrinterStatusAsync()
@@ -280,7 +288,7 @@ class CatPrinter : IAsyncDisposable
     {
         if (printerDevice == null)
         {
-            Console.WriteLine("Can't connect to GATT server due to the device not being found.");
+            Logger.LogLine("Can't connect to GATT server due to the device not being found.");
             return false;
         }
 
@@ -289,17 +297,17 @@ class CatPrinter : IAsyncDisposable
             return true;
         }
 
-        Console.Write("Connecting to GATT server... ");
+        Logger.Log("Connecting to GATT server... ", true);
         await printerDevice.Gatt.ConnectAsync();
 
         if (!printerDevice.Gatt.IsConnected)
         {
-            Console.WriteLine("Fail.");
+            Logger.LogLine("Fail.");
             return false;
         }
 
-        Console.WriteLine("Success.");
-        Console.WriteLine();
+        Logger.LogLine("Success.", true);
+        Logger.LogLine();
 
         return true;
     }
@@ -316,28 +324,28 @@ class CatPrinter : IAsyncDisposable
         GattService? service = await printerDevice!.Gatt.GetPrimaryServiceAsync(mainServiceId);
         if (service == null)
         {
-            Console.WriteLine($"Required service with ID {mainServiceId} is not found.");
+            Logger.LogLine($"Required service with ID {mainServiceId} is not found.");
             return false;
         }
 
         GattCharacteristic? printChr = await service.GetCharacteristicAsync(printCharacteristicId);
         if (printChr == null)
         {
-            Console.WriteLine($"Required characteristic with ID {printCharacteristicId} is not found.");
+            Logger.LogLine($"Required characteristic with ID {printCharacteristicId} is not found.");
             return false;
         }
 
         GattCharacteristic? notifyChr = await service.GetCharacteristicAsync(notifyCharacteristicId);
         if (notifyChr == null)
         {
-            Console.WriteLine($"Required characteristic with ID {notifyCharacteristicId} is not found.");
+            Logger.LogLine($"Required characteristic with ID {notifyCharacteristicId} is not found.");
             return false;
         }
 
         GattCharacteristic? dataChr = await service.GetCharacteristicAsync(dataCharacteristicId);
         if (dataChr == null)
         {
-            Console.WriteLine($"Required characteristic with ID {dataCharacteristicId} is not found.");
+            Logger.LogLine($"Required characteristic with ID {dataCharacteristicId} is not found.");
             return false;
         }
 
@@ -348,8 +356,8 @@ class CatPrinter : IAsyncDisposable
         notifyCharacteristic.CharacteristicValueChanged += NotifyCharacteristic_CharacteristicValueChanged;
         await notifyCharacteristic.StartNotificationsAsync();
 
-        Console.WriteLine("Found required characteristics and subscribed to notifications.");
-        Console.WriteLine();
+        Logger.LogLine("Found required characteristics and subscribed to notifications.", true);
+        Logger.LogLine();
 
         return true;
     }
@@ -359,12 +367,12 @@ class CatPrinter : IAsyncDisposable
         if (e.Value == null) return;
 
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.WriteLine($"Received notification: {ByteArrayToString(e.Value)}");
+        Logger.LogLine($"Received notification: {ByteArrayToString(e.Value)}");
         Console.ForegroundColor = ConsoleColor.Gray;
 
         if (e.Value[0] != 0x22 || e.Value[1] != 0x21)
         {
-            Console.WriteLine("Notification with wrong signature.");
+            Logger.LogLine("Notification with wrong signature.");
             return;
         }
 
@@ -402,38 +410,38 @@ class CatPrinter : IAsyncDisposable
                     }
                 }
 
-                Console.WriteLine($"Status: {(statusOk ? "Ok" : "Error")} ({statusDetails}), Battery: {batteryLevel}, Temperature: {temperature}");
+                Logger.LogLine($"Status: {(statusOk ? "Ok" : "Error")} ({statusDetails}), Battery: {batteryLevel}, Temperature: {temperature}");
                 break;
             }
             case CommandIds.EjectPaper:
             {
-                Console.WriteLine("Ejecting paper...");
+                Logger.LogLine("Ejecting paper...");
                 break;
             }
             case CommandIds.RetractPaper:
             {
-                Console.WriteLine("Retracting paper...");
+                Logger.LogLine("Retracting paper...");
                 break;
             }
             case CommandIds.QueryCount:
             {
-                Console.WriteLine($"Query count: {ByteArrayToString(e.Value, 6, 6)}");
+                Logger.LogLine($"Query count: {ByteArrayToString(e.Value, 6, 6)}");
                 break;
             }
             case CommandIds.Print:
             {
                 bool printStatusOk = e.Value[6] == 0;
-                Console.WriteLine($"Print status: {(printStatusOk ? "Ok" : "Failure")}");
+                Logger.LogLine($"Print status: {(printStatusOk ? "Ok" : "Failure")}");
                 break;
             }
             case CommandIds.PrintComplete:
             {
-                Console.WriteLine("Printing finished.");
+                Logger.LogLine("Printing finished.");
                 break;
             }
             case CommandIds.BatteryLevel:
             {
-                Console.WriteLine($"Battery level: {e.Value[6]}");
+                Logger.LogLine($"Battery level: {e.Value[6]}");
                 break;
             }
             case CommandIds.GetPrintType:
@@ -445,7 +453,7 @@ class CatPrinter : IAsyncDisposable
                     case 0xFF: type = "\"weishibie\" (???)"; break;
                     default: type = "\"diya\" (Low pressure / voltage / density?)"; break;
                 }
-                Console.WriteLine($"Print type: {type}");
+                Logger.LogLine($"Print type: {type}");
                 break;
             }
             case CommandIds.GetVersion:
@@ -458,15 +466,15 @@ class CatPrinter : IAsyncDisposable
                     case 0x31: type = "\"diya\" (Low pressure / voltage / density?)"; break;
                     default: type = "\"weishibie\" (???)"; break;
                 }
-                Console.WriteLine($"Version: {version}, Print type: {type}");
+                Logger.LogLine($"Version: {version}, Print type: {type}");
                 break;
             }
             default:
-                Console.WriteLine($"Unexpected command with ID {commandId}.");
+                Logger.LogLine($"Unexpected command with ID {commandId}.");
                 break;
         }
 
-        Console.WriteLine();
+        Logger.LogLine();
 
         ResponseReceived(commandId);
     }
@@ -491,9 +499,9 @@ class CatPrinter : IAsyncDisposable
     async Task SendCommand(CommandIds commandId, byte[] commandData, bool waitForResponse)
     {
         byte[] command = CreateCommand(commandId, commandData);
-        Console.Write($"Sending {commandId} command... ");
+        Logger.Log($"Sending {commandId} command... ", true);
         await printCharacteristic!.WriteValueWithoutResponseAsync(command);
-        Console.WriteLine("Finished\n");
+        Logger.LogLine("Finished\n", true);
 
         if (waitForResponse) await WaitForResponseAsync(commandId);
     }
@@ -508,7 +516,7 @@ class CatPrinter : IAsyncDisposable
         {
             if (currentTcs != null)
             {
-                Console.WriteLine($"There's a pending command with ID {commandId}");
+                Logger.LogLine($"There's a pending command with ID {commandId}", true);
                 return;
             }
         }

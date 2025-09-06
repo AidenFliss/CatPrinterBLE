@@ -32,13 +32,13 @@ class ImageProcessor
     {
         if (string.IsNullOrWhiteSpace(imagePath))
         {
-            Console.WriteLine("The specified image path is not valid.");
+            Logger.LogLine("The specified image path is not valid.");
             return null;
         }
 
         if (!File.Exists(imagePath))
         {
-            Console.WriteLine($"The specified image path doesn't exist.");
+            Logger.LogLine($"The specified image path doesn't exist.");
             return null;
         }
 
