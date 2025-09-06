@@ -8,7 +8,7 @@ using System.Numerics;
 
 namespace CatPrinterBLE;
 
-class ImageProcessor
+public class ImageProcessor
 {
     public enum ColorModes
     {

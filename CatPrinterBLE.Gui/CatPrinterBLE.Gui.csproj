@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+	  <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+	  <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CatPrinterBLE\CatPrinterBLE.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SixLabors.ImageSharp">
+      <HintPath>..\CatPrinterBLE\bin\Debug\net8.0-windows10.0.19041.0\SixLabors.ImageSharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

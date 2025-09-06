@@ -7,7 +7,7 @@ using static CatPrinterBLE.ImageProcessor;
 
 namespace CatPrinterBLE;
 
-class CatPrinter : IAsyncDisposable
+public class CatPrinter : IAsyncDisposable
 {
     static readonly BluetoothUuid mainServiceId = BluetoothUuid.FromShortId(0xAE30);
     static readonly BluetoothUuid printCharacteristicId = BluetoothUuid.FromShortId(0xAE01);
